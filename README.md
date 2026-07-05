@@ -10,13 +10,25 @@ Read-only is the intended, supported mode — ideal for pulling data off a Linux
 
 ## Requirements
 
-macFUSE (a system extension that provides FUSE on macOS):
+macFUSE provides FUSE on macOS:
 
 ```bash
 brew install --cask macfuse
 ```
 
-After installing, approve it in **System Settings → Privacy & Security** (you may need to restart).
+macFUSE is a **kernel extension**, so installing it is not enough — you have to enable it:
+
+1. Open **System Settings → Privacy & Security**, find the blocked *"system software from developer Benjamin Fleischer"* notice, and click **Allow**.
+2. **Restart your Mac.** The extension only loads after a reboot.
+
+On **Apple Silicon**, loading any third-party kernel extension the first time also requires lowering the security policy:
+
+1. Shut down, then hold the **power button** until *"Loading startup options"* appears → **Options** → **Continue** (this is Recovery mode).
+2. Menu bar **Utilities → Startup Security Utility**, select your disk → **Security Policy…**
+3. Choose **Reduced Security** and tick **"Allow user management of kernel extensions from identified developers."**
+4. Restart, then do the **Allow + reboot** steps above.
+
+See [macFUSE's documentation](https://macfuse.github.io/) if the extension still won't load.
 
 ---
 
@@ -53,32 +65,49 @@ sudo cp fuse-ext2/fuse-ext2 /usr/local/bin/
 
 ## Usage
 
-Find the device you want to read:
+### The easy way — `fuse-ext2-mount`
+
+Installing via Homebrew also gives you a `fuse-ext2-mount` helper that handles
+`sudo`, the right options, and the prerequisite checks for you:
 
 ```bash
-diskutil list
+fuse-ext2-mount                           # list ext partitions on attached drives
+fuse-ext2-mount /dev/disk4s3              # mount read-only at /tmp/ext-disk4s3
+fuse-ext2-mount /dev/disk4s3 --recovered  # drive from another machine (foreign UIDs)
+sudo umount /tmp/ext-disk4s3              # unmount when done
 ```
 
-Mount it **read-only** at a directory of your choice:
+Add `--dry-run` to any command to see exactly what it will run.
+
+### Manually
+
+Find the ext partition (`diskutil list` — look for `Linux Filesystem`; macOS
+can't read ext, so it won't auto-mount, which is expected). Reading a raw device
+requires root, so use `sudo`:
 
 ```bash
 mkdir -p /tmp/ext
-fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other
+sudo fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other
+# ... browse /tmp/ext ...
+sudo umount /tmp/ext
 ```
 
-Browse it in Finder or the terminal at `/tmp/ext`, then unmount when done:
+`allow_other` lets your normal account see the files even though root mounted it.
+For a drive **recovered from another machine**, add `no_default_permissions` so
+files owned by a UID that doesn't exist here stay readable:
 
 ```bash
-umount /tmp/ext
+sudo fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other,no_default_permissions
 ```
 
-### Reading data recovered from another machine
+## Troubleshooting
 
-Files owned by a user ID that doesn't exist on your Mac are normally blocked, so you can't read your own recovered data without becoming root. Add `no_default_permissions` and the driver serves them to you directly:
-
-```bash
-fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other,no_default_permissions
-```
+- **"Operation not permitted" / can't open the device** — grant your terminal
+  **Full Disk Access** (System Settings → Privacy & Security → Full Disk Access),
+  then try the `sudo fuse-ext2 …` command again.
+- **"the file system is not available" / nothing mounts** — macFUSE isn't loaded.
+  Re-check the enablement steps under [Requirements](#requirements) (approve the
+  extension, reboot; on Apple Silicon, the Recovery-mode security policy).
 
 ---
 

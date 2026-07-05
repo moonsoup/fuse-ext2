@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# fuse-ext2-mount — mount an ext2/3/4 device read-only with the right options
+# and prerequisite checks, so you don't have to remember sudo / -o flags / gotchas.
+#
+# Usage:
+#   fuse-ext2-mount                         list candidate ext partitions
+#   fuse-ext2-mount <device> [mountpoint]   mount read-only (default mnt: /tmp/ext-<dev>)
+#   fuse-ext2-mount <device> [mnt] --recovered
+#                                           also pass no_default_permissions, to read
+#                                           files owned by a uid that doesn't exist on
+#                                           this Mac (e.g. a drive from another machine)
+#   fuse-ext2-mount ... --dry-run           print the command instead of running it
+#
+# Always read-only. Unmount with:  sudo umount <mountpoint>
+
+set -euo pipefail
+
+usage() { sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; }
+
+# Parse flags (order-independent) out of the args.
+RECOVERED=0; DRY=0; POS=()
+for a in "$@"; do
+  case "$a" in
+    --recovered) RECOVERED=1 ;;
+    --dry-run)   DRY=1 ;;
+    -h|--help)   usage; exit 0 ;;
+    *)           POS+=("$a") ;;
+  esac
+done
+
+# No device given: show candidates and exit.
+if [ "${#POS[@]}" -eq 0 ]; then
+  echo "Candidate Linux partitions (pass one as the device):"
+  diskutil list | grep -iE "Linux Filesystem|Linux" || echo "  (none found — is the drive plugged in?)"
+  echo
+  usage
+  exit 0
+fi
+
+DEV="${POS[0]}"
+MNT="${POS[1]:-/tmp/ext-$(basename "$DEV")}"
+OPTS="ro,allow_other"
+[ "$RECOVERED" -eq 1 ] && OPTS="${OPTS},no_default_permissions"
+
+# Prerequisite checks with actionable messages.
+if ! command -v fuse-ext2 >/dev/null 2>&1; then
+  echo "error: fuse-ext2 is not installed." >&2
+  echo "  brew install moonsoup/fuse-ext2/fuse-ext2" >&2
+  exit 1
+fi
+if [ ! -d /Library/Filesystems/macfuse.fs ]; then
+  echo "error: macFUSE is not installed." >&2
+  echo "  brew install --cask macfuse   (then enable it in Privacy & Security and reboot)" >&2
+  exit 1
+fi
+
+CMD=(sudo fuse-ext2 "$DEV" "$MNT" -o "$OPTS")
+if [ "$DRY" -eq 1 ]; then
+  printf 'mkdir -p %q\n' "$MNT"
+  printf '%q ' "${CMD[@]}"; printf '\n'
+  exit 0
+fi
+
+mkdir -p "$MNT"
+echo "Mounting $DEV read-only at $MNT (options: $OPTS)"
+if ! "${CMD[@]}"; then
+  echo >&2
+  echo "Mount failed. Most common causes:" >&2
+  echo "  * Permission reading the device — grant your terminal Full Disk Access" >&2
+  echo "    (System Settings > Privacy & Security > Full Disk Access), then retry." >&2
+  echo "  * macFUSE not loaded — approve it in Privacy & Security and reboot" >&2
+  echo "    (Apple Silicon: Recovery > Startup Security Utility > Reduced Security)." >&2
+  exit 1
+fi
+echo "Mounted. Browse: $MNT"
+echo "Unmount with:  sudo umount $MNT"
