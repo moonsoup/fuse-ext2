@@ -49,3 +49,9 @@ tools/macosx/Makefile
 ##
 **/fuse-ext2
 tools/macosx/prefpane/build
+
+# autoconf backup/junk
+config.guess~
+config.sub~
+*~
+CLAUDE.md

@@ -1,244 +1,97 @@
-# Fuse Ext2
+# fuse-ext2
 
-**Fuse-ext2** is an EXT2/EXT3/EXT4 filesystem for  [**FUSE**](https://github.com/osxfuse/fuse), and is built to work with [**osxfuse**](https://github.com/osxfuse/osxfuse).
+Mount **ext2 / ext3 / ext4** filesystems on **macOS** (Apple Silicon and Intel), read-only, using [macFUSE](https://macfuse.github.io/).
 
-## Dependencies
+This is a maintained fork of [alperakcan/fuse-ext2](https://github.com/alperakcan/fuse-ext2) with the fixes needed to build and mount on current macOS, where the original no longer compiles and the Homebrew formula has been removed.
 
-**Fuse-ext2** requires at least Fuse version 2.6.0 for Linux.  
-**Fuse-ext2** requires at least **Fuse for macOS** version 2.7.5 or greater.
+Read-only is the intended, supported mode — ideal for pulling data off a Linux drive from a Mac.
 
-- Linux: [Fuse](http://fuse.sourceforge.net/)
-- macOS: [Fuse for macOS](https://osxfuse.github.io)
+---
 
-### Alternate Install method of _Fuse for macOS_
+## Requirements
 
-**Fuse for macOS** can be installed via [homebrew](http://brew.sh) if [Homebrew-Cask](https://caskroom.github.io/) has been tapped.
-
-Look for **`homebrew/cask`** in the output.
-
-To install **Fuse for macOS** using brew:
-
-You will be interactively prompted for sudo access during the install.
-
-```bash
-brew install --cask osxfuse
-```
-
-For Fuse version 4.0.0 and higher use macfuse
+macFUSE (a system extension that provides FUSE on macOS):
 
 ```bash
 brew install --cask macfuse
 ```
 
-## Building
+After installing, approve it in **System Settings → Privacy & Security** (you may need to restart).
 
-### Debian/Ubuntu:
+---
 
-Building from source depends on the following:
+## Install
 
-* m4
-* autoconf
-* automake
-* libtool
-* libfuse-dev
-* e2fsprogs
-* comerr-dev
-* e2fslibs-dev
+### Homebrew (recommended)
 
-```shell
-$ sudo apt-get install m4 autoconf automake libtool
-$ sudo apt-get install libfuse-dev e2fsprogs comerr-dev e2fslibs-dev
-	
-$ ./autogen.sh
-$ ./configure
-$ make
-$ sudo make install
+```bash
+brew install moonsoup/fuse-ext2/fuse-ext2
 ```
 
-### Fedora 
-```bash 
-$ sudo dnf install @development-tools m4 autoconf automake libtool e2fsprogs libcom_err-devel fuse-libs e2fsprogs-devel fuse-devel
-# build part 
-$ ./autogen.sh
-$ ./configure
-$ make
-$ sudo make install
-```
+### From source
 
-You can use `checkinstall` or some other equivalent tool to generate an install 
-package for your distribution.
+```bash
+# build dependencies
+brew install autoconf automake libtool pkg-config e2fsprogs
 
-### FreeBSD:
-
-Install via pkg:
-
-```shell
-$ pkg install sysutils/fusefs-ext2
-```
-
-Building via ports:
-
-```shell
-$ cd /usr/ports/sysutils/fusefs-ext2
-$ make install clean
-```
-
-### macOS:
-
-Dependencies:
-
-[OSXfuse](https://osxfuse.github.io)
-
-Building **from source** depends on the following:
-
-* m4
-* autoconf
-* automake
-* libtool
-* e2fsprogs
-* xcode-select
-
-Copy and paste this into a file such as `/tmp/ext4/script.sh`, but do *not* name the file `install.sh`. Remember to `chmod +x script.sh`. Run it 
-from that directory - `./script.sh`
-
-```shell
-#!/bin/sh
-export PATH=/opt/gnu/bin:$PATH
-export PKG_CONFIG_PATH=/opt/gnu/lib/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-
-mkdir fuse-ext2.build
-cd fuse-ext2.build
-
-if [ ! -d fuse-ext2 ]; then
-    git clone https://github.com/alperakcan/fuse-ext2.git	
-fi
-
-# m4
-if [ ! -f m4-1.4.17.tar.gz ]; then
-    curl -O -L http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz
-fi
-tar -zxvf m4-1.4.17.tar.gz 
-cd m4-1.4.17
-./configure --prefix=/opt/gnu
-make -j 16
-sudo make install
-cd ../
-    
-# autoconf
-if [ ! -f autoconf-2.69.tar.gz ]; then
-    curl -O -L http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz
-fi
-tar -zxvf autoconf-2.69.tar.gz 
-cd autoconf-2.69
-./configure --prefix=/opt/gnu
-make
-sudo make install
-cd ../
-    
-# automake
-if [ ! -f automake-1.15.tar.gz ]; then
-    curl -O -L http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz
-fi
-tar -zxvf automake-1.15.tar.gz 
-cd automake-1.15
-./configure --prefix=/opt/gnu
-make
-sudo make install
-cd ../
-    
-# libtool
-if [ ! -f libtool-2.4.6.tar.gz ]; then
-    curl -O -L http://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz
-fi
-tar -zxvf libtool-2.4.6.tar.gz 
-cd libtool-2.4.6
-./configure --prefix=/opt/gnu
-make
-sudo make install
-cd ../
-
-# e2fsprogs
-if [ ! -f e2fsprogs-1.43.4.tar.gz ]; then
-    curl -O -L https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.43.4/e2fsprogs-1.43.4.tar.gz
-fi
-tar -zxvf e2fsprogs-1.43.4.tar.gz
-cd e2fsprogs-1.43.4
-./configure --prefix=/opt/gnu --disable-nls
-make
-sudo make install
-sudo make install-libs
-sudo cp /opt/gnu/lib/pkgconfig/* /usr/local/lib/pkgconfig
-cd ../
-    
-# fuse-ext2
-export PATH=/opt/gnu/bin:$PATH
-export PKG_CONFIG_PATH=/opt/gnu/lib/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-
+git clone https://github.com/moonsoup/fuse-ext2
 cd fuse-ext2
 ./autogen.sh
-CFLAGS="-idirafter/opt/gnu/include -idirafter/usr/local/include/osxfuse/" LDFLAGS="-L/opt/gnu/lib -L/usr/local/lib" ./configure
-make
-sudo make install
+
+E2P="$(brew --prefix e2fsprogs)"
+export LIBTOOLIZE=glibtoolize
+export CPPFLAGS="-I/usr/local/include -I/usr/local/include/fuse -I${E2P}/include"
+export LDFLAGS="-L/usr/local/lib -L${E2P}/lib -F/Library/Filesystems/macfuse.fs/Contents/Frameworks"
+export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:${E2P}/lib/pkgconfig"
+./configure
+
+make -C fuse-ext2 fuse-ext2      # the driver binary
+sudo cp fuse-ext2/fuse-ext2 /usr/local/bin/
 ```
 
-# Test
+---
 
-The e2fsprogs live in /opt/gnu/bin and /opt/gnu/sbin. fuse-ext2 is in /usr/local/bin.
+## Usage
 
-```shell
-cd
-dd if=/dev/zero of=/tmp/test-fs.ext4 bs=1024 count=102400  
-/opt/gnu/sbin/mkfs.ext4 /tmp/test-fs.ext4
-mkdir -p ~/mnt/fuse-ext2.test-fs.ext4
-fuse-ext2 /tmp/test-fs.ext4 ~/mnt/fuse-ext2.test-fs.ext4 -o rw+,allow_other,uid=501,gid=20
+Find the device you want to read:
+
+```bash
+diskutil list
 ```
 
-To verify the **UID** and **GID** of the user mounting the file system:
+Mount it **read-only** at a directory of your choice:
 
-```shell
-id
+```bash
+mkdir -p /tmp/ext
+fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other
 ```
 
-To verify the file system has mounted properly:
+Browse it in Finder or the terminal at `/tmp/ext`, then unmount when done:
 
-```shell
-mount
+```bash
+umount /tmp/ext
 ```
 
-# Usage
+### Reading data recovered from another machine
 
-See the [Man page](http://man.cx/fuseext2(1)) for options.
+Files owned by a user ID that doesn't exist on your Mac are normally blocked, so you can't read your own recovered data without becoming root. Add `no_default_permissions` and the driver serves them to you directly:
 
-```
-Usage:    fuse-ext2 <device|image_file> <mount_point> [-o option[,...]]
-
-Options:  ro, rw+, force, allow_other
-          Please see details in the manual.
-
-Example:  fuse-ext2 /dev/sda1 /mnt/sda1
+```bash
+fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other,no_default_permissions
 ```
 
-# Bugs
+---
 
-* Multithread support is broken for now, so fuse operates in a single thread.
-* There are no known bugs for read-only mode, read only mode should be ok for everyone.
-* Even though write support is available, _please do not mount your filesystems with write support unless you have nothing to lose._
+## What this fork changes
 
-Please send the output of the command below when reporting bugs as a [GitHub Issue](https://github.com/alperakcan/fuse-ext2/issues/new).
-Before submitting a bug report, please look at the [existing issues](https://github.com/alperakcan/fuse-ext2/issues?utf8=%E2%9C%93&q=is%3Aissue) first.
+- **Builds on current macOS** — adapts the `getxattr` operation to the Darwin signature (offered upstream as [#154](https://github.com/alperakcan/fuse-ext2/pull/154)).
+- **`no_default_permissions` option** — read files owned by a foreign UID (recovered drives) without mounting as root (offered upstream as [#155](https://github.com/alperakcan/fuse-ext2/pull/155)).
+- Read-only mount verified on ext2, ext3, and ext4.
 
-```shell
-$ /usr/local/bin/fuse-ext2 -v /dev/path /mnt/point -o debug
-```
+---
 
-# Important: Partition Labels
+## License
 
-Please **do not** use commas `,` in partition labels.
+GPL-2.0, same as upstream. See [COPYING](COPYING).
 
-**Wrong:** `e2label /dev/disk0s3 "linux,ext3"`
-
-**Correct:** `e2label /dev/disk0s3 "linux-ext3"`
-
-# Contact
-
-Alper Akcan <alper.akcan@gmail.com>
+Original work by Alper Akcan and contributors. This fork exists to keep it usable on modern macOS.
