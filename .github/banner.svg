@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 210" width="860" height="210" role="img" aria-label="fuse-ext2 — read ext2, ext3 and ext4 drives on macOS">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141b26"/>
+      <stop offset="1" stop-color="#271a40"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7ee787"/>
+      <stop offset="1" stop-color="#58a6ff"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="1.5" y="1.5" width="857" height="207" rx="22" fill="url(#bg)" stroke="#38445c" stroke-width="1.5"/>
+
+  <!-- drive / platter glyph -->
+  <g transform="translate(52,63)">
+    <rect x="0" y="0" width="84" height="84" rx="12" fill="#0d131f" stroke="url(#accent)" stroke-width="2.5"/>
+    <circle cx="42" cy="42" r="24" fill="none" stroke="#58a6ff" stroke-width="2.5" opacity="0.85"/>
+    <circle cx="42" cy="42" r="11" fill="none" stroke="#58a6ff" stroke-width="2" opacity="0.5"/>
+    <line x1="42" y1="42" x2="61" y2="21" stroke="#7ee787" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="42" cy="42" r="4.5" fill="#7ee787"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="176" y="102" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="62" font-weight="700" fill="#f0f6fc">fuse-ext2</text>
+
+  <!-- subtitle -->
+  <text x="178" y="146" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif" font-size="24" fill="#9aa7b8">read <tspan fill="#7ee787" font-weight="600">ext2 · ext3 · ext4</tspan> drives on <tspan fill="#58a6ff" font-weight="600">macOS</tspan></text>
+
+  <!-- read-only chip -->
+  <g transform="translate(700,30)">
+    <rect x="0" y="0" width="112" height="30" rx="15" fill="#0d131f" stroke="#38445c"/>
+    <circle cx="19" cy="15" r="4" fill="#7ee787"/>
+    <text x="34" y="20" font-family="ui-sans-serif, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#c9d6e5">read-only</text>
+  </g>
+</svg>

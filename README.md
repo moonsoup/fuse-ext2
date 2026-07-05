@@ -1,10 +1,14 @@
-# fuse-ext2
+<div align="center">
+  <img src=".github/banner.svg" alt="fuse-ext2 — read ext2/ext3/ext4 drives on macOS" width="760">
+</div>
 
-[![Latest release](https://img.shields.io/github/v/release/moonsoup/fuse-ext2?sort=semver&color=success)](https://github.com/moonsoup/fuse-ext2/releases/latest)
-[![License: GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-blue.svg)](COPYING)
-![Platform: macOS](https://img.shields.io/badge/platform-macOS%20%28Apple%20Silicon%20%7C%20Intel%29-lightgrey)
-[![Install: Homebrew](https://img.shields.io/badge/install-Homebrew%20tap-orange)](https://github.com/moonsoup/homebrew-fuse-ext2)
-[![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-ea4aaa)](https://github.com/sponsors/moonsoup)
+<p align="center">
+  <a href="https://github.com/moonsoup/fuse-ext2/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/moonsoup/fuse-ext2?sort=semver&color=success"></a>
+  <a href="COPYING"><img alt="License: GPL-2.0" src="https://img.shields.io/badge/license-GPL--2.0-blue.svg"></a>
+  <img alt="Platform: macOS (Apple Silicon | Intel)" src="https://img.shields.io/badge/platform-macOS%20%28Apple%20Silicon%20%7C%20Intel%29-lightgrey">
+  <a href="https://github.com/moonsoup/homebrew-fuse-ext2"><img alt="Install: Homebrew tap" src="https://img.shields.io/badge/install-Homebrew%20tap-orange"></a>
+  <a href="https://github.com/sponsors/moonsoup"><img alt="Sponsor" src="https://img.shields.io/badge/sponsor-%E2%9D%A4-ea4aaa"></a>
+</p>
 
 Mount **ext2 / ext3 / ext4** filesystems on **macOS** (Apple Silicon and Intel), read-only, using [macFUSE](https://macfuse.github.io/).
 
