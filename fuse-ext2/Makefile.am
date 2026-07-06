@@ -23,6 +23,8 @@ fuse_ext2_probe_CFLAGS = \
 fuse_ext2_SOURCES =	\
 	fuse-ext2.h \
 	fuse-ext2.c \
+	wb_governor.h \
+	wb_governor.c \
 	do_probe.c \
 	do_check.c \
 	do_fillstatbuf.c \

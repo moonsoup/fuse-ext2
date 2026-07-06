@@ -19,6 +19,7 @@
  */
 
 #include "fuse-ext2.h"
+#include "wb_governor.h"
 
 void * op_init (struct fuse_conn_info *conn)
 {
@@ -45,6 +46,11 @@ void * op_init (struct fuse_conn_info *conn)
 		exit(1);
 	}
 	debugf("FileSystem %s", (e2data->e2fs->flags & EXT2_FLAG_RW) ? "Read&Write" : "ReadOnly");
+
+	/* Bound dirty writeback so sustained writes to a slow device cannot build
+	 * unbounded memory pressure (issues #3/#4). No-op for read-only mounts
+	 * (the write path is never entered). */
+	wb_governor_init();
 
 	debugf("leave");
 

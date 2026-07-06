@@ -19,6 +19,7 @@
  */
 
 #include "fuse-ext2.h"
+#include "wb_governor.h"
 
 size_t do_write (ext2_file_t efile, const char *buf, size_t size, off_t offset)
 {
@@ -82,6 +83,13 @@ int op_write (const char *path, const char *buf, size_t size, off_t offset, stru
 	efile = do_open(e2fs, path, O_WRONLY);
 	rt = do_write(efile, buf, size, offset);
 	do_release(efile);
+
+	/* Successful writes are accounted by the writeback governor, which forces
+	 * a blocking durability flush every `bound` bytes — pacing the FUSE ack to
+	 * device speed so dirty pages stay bounded (issues #3/#4). */
+	if ((ssize_t) rt > 0) {
+		wb_governor_note_write((size_t) rt);
+	}
 
 	debugf("leave");
 	return rt;
