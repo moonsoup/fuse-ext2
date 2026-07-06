@@ -47,7 +47,7 @@ tools/macosx/Makefile
 ##
 # NOTE: all object files, ie. `.o`'s are placed within `fuse-ext2/fuse-ext2` dir
 ##
-**/fuse-ext2
+/fuse-ext2/fuse-ext2
 tools/macosx/prefpane/build
 
 # autoconf backup/junk
