@@ -27,8 +27,18 @@ int op_fsync (const char *path, int datasync, struct fuse_file_info *fi)
 
 	debugf("enter");
 	debugf("path = %s (%p)", path, fi);
-	
+
 	rc = ext2fs_flush(e2fs);
+	if (rc) {
+		return -EIO;
+	}
+
+	/* ext2fs_flush only pushes libext2fs's state into the io-channel, whose
+	 * writes are buffered by the OS page cache — it is NOT a durability
+	 * barrier. io_channel_flush -> unix_flush writes out the channel's cached
+	 * blocks and then fsync()s the backing device fd, which is what fsync(2)
+	 * semantics actually require (issue #3). */
+	rc = io_channel_flush(e2fs->io);
 	if (rc) {
 		return -EIO;
 	}
