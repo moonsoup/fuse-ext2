@@ -16,6 +16,10 @@ This is a maintained fork of [alperakcan/fuse-ext2](https://github.com/alperakca
 
 Read-only is the intended, supported mode — ideal for pulling data off a Linux drive from a Mac.
 
+### Companion tools
+
+- **[fuse-watchdog](https://github.com/moonsoup/fuse-watchdog)** — an optional, external recovery watchdog that auto-remounts a fuse-ext2 mount if the backing USB device drops off the bus (`ENXIO` / "Device not configured"). It re-verifies the ext4 UUID before remounting, so it can never attach the wrong disk. Built specifically as a workaround for a flaky USB dock; **not needed with reliable hardware** — the real fix for a dropping dock is a better enclosure (UASP/ASMedia or Thunderbolt).
+
 ---
 
 ## Requirements
