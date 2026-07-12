@@ -305,6 +305,40 @@ static int op_getxattr_darwin(const char *path, const char *name, char *value,
 	(void) position;
 	return op_getxattr(path, name, value, size);
 }
+
+/* macOS's `disksleep` power-management setting (default non-zero on most
+ * Macs) lets the kernel drop an idle external drive into an UNPOWERED sleep
+ * state (D3Cold) rather than a merely-idle-but-powered one (D3Hot) — which
+ * looks identical to physically unplugging the drive mid-operation. On a
+ * long-running read-write ext4 mount this has been observed to wedge the
+ * mount (uninterruptible kernel I/O wait) or corrupt block/inode bitmaps if
+ * it fires mid-write. This is a macOS power-management behavior, not a bug
+ * in this driver, but the failure mode looks exactly like driver/hardware
+ * flakiness, so warn loudly at mount time rather than let users discover it
+ * only after data loss. Advisory only — never blocks the mount. */
+static void warn_if_disksleep_enabled_darwin(void) {
+	FILE *p = popen("pmset -g 2>/dev/null", "r");
+	if (!p) {
+		return;
+	}
+	char line[256];
+	while (fgets(line, sizeof(line), p)) {
+		int val;
+		if (sscanf(line, " disksleep %d", &val) == 1) {
+			if (val != 0) {
+				fprintf(stderr,
+					"fuse-ext2: WARNING: macOS 'disksleep' power setting is %d (non-zero).\n"
+					"  A long read-write mount can have its drive dropped into an unpowered\n"
+					"  sleep state mid-operation, which looks like a wedged mount or filesystem\n"
+					"  corruption but is actually this power setting. Recommended before any\n"
+					"  extended write session:\n"
+					"    sudo pmset -a disksleep 0\n", val);
+			}
+			break;
+		}
+	}
+	pclose(p);
+}
 #endif
 
 static const struct fuse_operations ext2fs_ops = {
@@ -407,6 +441,9 @@ int main (int argc, char *argv[])
 
 	if (opts.readonly == 0) {
 		debugf_main("mounting read-write");
+#ifdef __APPLE__
+		warn_if_disksleep_enabled_darwin();
+#endif
 	} else {
 		debugf_main("mounting read-only");
 	}
