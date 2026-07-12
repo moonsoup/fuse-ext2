@@ -26,7 +26,7 @@ jobs:
         run: pip install pytest
 
       - name: Run tests before touching live data
-        run: python3 -m pytest .github/scripts/test_update_feedback_badges.py -v
+        run: python3 -m pytest test_update_feedback_badges.py -v
         working-directory: .github/scripts
 
       - name: Update badge JSON from live reaction counts
