@@ -19,6 +19,7 @@
  */
 
 #include "fuse-ext2.h"
+#include "wb_governor.h"
 
 int op_link (const char *source, const char *dest)
 {
@@ -98,6 +99,9 @@ int op_link (const char *source, const char *dest)
 	}
 
 	free_split(p_path, r_path);
+
+	wb_governor_note_alloc();
+
 	debugf("done");
 
 	return 0;

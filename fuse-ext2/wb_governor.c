@@ -26,6 +26,10 @@ static uint64_t bound_normal;
 static uint64_t bound_warn;
 static uint64_t bound_critical;
 
+static uint64_t ops_since_flush;
+static uint64_t bound_alloc_ops;
+static int wb_disabled;
+
 #ifdef __APPLE__
 static dispatch_source_t pressure_source;
 #endif
@@ -48,18 +52,54 @@ static uint64_t env_mib (const char *name, uint64_t def_mib)
 	return (uint64_t) mib << 20;
 }
 
+static uint64_t env_count (const char *name, uint64_t def_count)
+{
+	const char *v;
+	char *end;
+	unsigned long long n;
+
+	v = getenv(name);
+	if (v == NULL || *v == '\0') {
+		return def_count;
+	}
+	n = strtoull(v, &end, 10);
+	if (*end != '\0' || n == 0) {
+		debugf_main("ignoring invalid %s='%s' (want a count > 0)", name, v);
+		return def_count;
+	}
+	return (uint64_t) n;
+}
+
 void wb_governor_init (void)
 {
+	const char *dv;
+
 	bound_normal   = env_mib("FUSE_EXT2_WB_NORMAL_MIB",   128);
 	bound_warn     = env_mib("FUSE_EXT2_WB_WARN_MIB",      16);
 	bound_critical = env_mib("FUSE_EXT2_WB_CRITICAL_MIB",   1);
+	bound_alloc_ops = env_count("FUSE_EXT2_WB_ALLOC_OPS", 256);
 	bytes_since_flush = 0;
+	ops_since_flush = 0;
 	atomic_store(&wb_bound, bound_normal);
 
-	debugf_main("writeback governor: floor %llu MiB (warn %llu, critical %llu)",
+	/* Diagnostic escape hatch — NOT the default, and not a substitute for the
+	 * durability the governor provides. Exists to isolate whether a governor
+	 * flush's blocking fsync(2) on a slow/USB device is itself long enough to
+	 * make macFUSE's KERNEL side give up on the channel (the daemon recovers
+	 * and goes back to idle, but the kernel has already stopped forwarding
+	 * requests to it — "ghost mount" symptom, ENODEV on every syscall). If
+	 * disabling this makes the wedge go away, that confirms the flush call
+	 * itself as a contributing trigger and points at a differently-paced or
+	 * async flush strategy, not "no flush." */
+	dv = getenv("FUSE_EXT2_WB_DISABLE");
+	wb_disabled = (dv != NULL && dv[0] != '\0' && dv[0] != '0');
+
+	debugf_main("writeback governor: floor %llu MiB (warn %llu, critical %llu), alloc-ops bound %llu%s",
 			(unsigned long long) (bound_normal >> 20),
 			(unsigned long long) (bound_warn >> 20),
-			(unsigned long long) (bound_critical >> 20));
+			(unsigned long long) (bound_critical >> 20),
+			(unsigned long long) bound_alloc_ops,
+			wb_disabled ? " [DISABLED via FUSE_EXT2_WB_DISABLE]" : "");
 
 #ifdef __APPLE__
 	/* Tighten the bound on WARN/CRITICAL, relax on NORMAL. Transitions only
@@ -91,9 +131,24 @@ void wb_governor_init (void)
 #endif
 }
 
+/* ext2fs_flush(): writes dirty bitmaps/superblock/group descriptors via
+ * ext2fs_write_bitmaps(), THEN flushes the io channel (unix_flush: cached
+ * blocks + fsync(device fd)). A real superset of the old io_channel_flush()-
+ * only call — see the note at the top of wb_governor.h for why the bitmap
+ * half matters. */
+static void do_flush (ext2_filsys e2fs)
+{
+	if (e2fs == NULL) {
+		return;
+	}
+	ext2fs_flush(e2fs);
+}
+
 void wb_governor_note_write (size_t bytes)
 {
-	ext2_filsys e2fs;
+	if (wb_disabled) {
+		return;
+	}
 
 	bytes_since_flush += bytes;
 	if (bytes_since_flush < atomic_load(&wb_bound)) {
@@ -104,12 +159,21 @@ void wb_governor_note_write (size_t bytes)
 	 * subsequent byte; the next window will try again. */
 	bytes_since_flush = 0;
 
-	e2fs = current_ext2fs();
-	if (e2fs == NULL || e2fs->io == NULL) {
+	do_flush(current_ext2fs());
+}
+
+void wb_governor_note_alloc (void)
+{
+	if (wb_disabled) {
 		return;
 	}
-	/* unix_flush: write out the io-channel's cached blocks, then fsync the
-	 * device fd. Blocking here paces the FUSE ack to real device speed — this
-	 * IS the backpressure. */
-	io_channel_flush(e2fs->io);
+
+	ops_since_flush++;
+	if (ops_since_flush < bound_alloc_ops) {
+		return;
+	}
+
+	ops_since_flush = 0;
+
+	do_flush(current_ext2fs());
 }

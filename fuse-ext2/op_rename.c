@@ -19,6 +19,7 @@
  */
 
 #include "fuse-ext2.h"
+#include "wb_governor.h"
 
 static int fix_dotdot_proc (ext2_ino_t dir EXT2FS_ATTR((unused)),
 		int entry EXT2FS_ATTR((unused)),
@@ -245,5 +246,8 @@ int op_rename (const char *source, const char *dest)
 
 out:	free_split(p_src, r_src);
 	free_split(p_dest, r_dest);
+	if (rt == 0) {
+		wb_governor_note_alloc();
+	}
 	return rt;
 }

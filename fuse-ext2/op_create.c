@@ -19,6 +19,7 @@
  */
 
 #include "fuse-ext2.h"
+#include "wb_governor.h"
 
 int do_modetoext2lag (mode_t mode)
 {
@@ -198,6 +199,8 @@ int do_create (ext2_filsys e2fs, const char *path, mode_t mode, dev_t dev, const
 	}
 
 	free_split(p_path, r_path);
+
+	wb_governor_note_alloc();
 
 	debugf("leave");
 	return 0;

@@ -19,6 +19,7 @@
  */
 
 #include "fuse-ext2.h"
+#include "wb_governor.h"
 
 int op_symlink (const char *sourcename, const char *destname)
 {
@@ -60,6 +61,9 @@ int op_symlink (const char *sourcename, const char *destname)
 			return rt;
 		}
 	}
+
+	wb_governor_note_alloc();
+
 	debugf("leave");
 	return 0;
 }
