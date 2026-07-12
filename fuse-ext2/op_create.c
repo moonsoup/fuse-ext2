@@ -88,9 +88,19 @@ int do_create (ext2_filsys e2fs, const char *path, mode_t mode, dev_t dev, const
 
 	rc = ext2fs_new_inode(e2fs, ino, mode, 0, &n_ino);
 	if (rc) {
-		debugf("ext2fs_new_inode(ep.fs, ino, mode, 0, &n_ino); failed");
+		/* This used to unconditionally return -ENOMEM regardless of the
+		 * real libext2fs error, which hid the actual cause (e.g. real
+		 * inode exhaustion, a corrupted/inconsistent bitmap, or a bad
+		 * group descriptor all looked identical to callers as generic
+		 * "out of memory"). Log the real com_err message and map to a
+		 * more accurate errno so failures during heavy small-file
+		 * write bursts are diagnosable instead of a dead end. */
+		debugf("ext2fs_new_inode() failed: %s (rc=%ld)", error_message(rc), (long) rc);
 		free_split(p_path, r_path);
-		return -ENOMEM;
+		if (rc == EXT2_ET_INODE_ALLOC_FAIL) {
+			return -ENOSPC;
+		}
+		return -EIO;
 	}
 
 	do {
@@ -127,8 +137,18 @@ int do_create (ext2_filsys e2fs, const char *path, mode_t mode, dev_t dev, const
 		ext2_write_uid(&inode, ctx->uid);
 		ext2_write_gid(&inode, ctx->gid);
 	}
-	if (e2fs->super->s_feature_incompat &
-	    EXT3_FEATURE_INCOMPAT_EXTENTS) {
+	/* i_block is reused as raw storage (not an extent tree) for device
+	 * nodes and fast (inline-target) symlinks below. Writing an extent
+	 * header into i_block and then setting EXT4_EXTENTS_FL, only to have
+	 * that same i_block overwritten with a dev encoding or the literal
+	 * symlink target, leaves the flag claiming an extent tree exists
+	 * where none does. e2fsck correctly flags that as corruption
+	 * ("Fast symlink N has EXTENT_FL set" / "Symlink ... is invalid").
+	 * This is what turned real npm node_modules trees (full of dot-bin
+	 * and scoped-package symlinks) into corrupted filesystems. */
+	if ((e2fs->super->s_feature_incompat & EXT3_FEATURE_INCOMPAT_EXTENTS) &&
+	    !(S_ISCHR(mode) || S_ISBLK(mode)) &&
+	    !(S_ISLNK(mode) && fastsymlink != NULL)) {
 		int i;
 		struct ext3_extent_header *eh;
 
