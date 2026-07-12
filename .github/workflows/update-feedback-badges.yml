@@ -1,0 +1,48 @@
+name: Update feedback badges
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: read
+
+env:
+  FEEDBACK_ISSUE_NUMBER: "13"
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test deps
+        run: pip install pytest
+
+      - name: Run tests before touching live data
+        run: python3 -m pytest .github/scripts/test_update_feedback_badges.py -v
+        working-directory: .github/scripts
+
+      - name: Update badge JSON from live reaction counts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 update_feedback_badges.py
+        working-directory: .github/scripts
+
+      - name: Commit badge update if changed
+        run: |
+          if git diff --quiet -- .github/badges; then
+            echo "no change in badge counts"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/badges
+          git commit -m "chore: update feedback badge counts [skip ci]"
+          git push

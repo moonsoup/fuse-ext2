@@ -1,0 +1,37 @@
+name: "\U0001F41B Report a problem"
+description: Something isn't working — help us fix it.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. If you reacted 👎 on the
+        [community feedback issue](../../issues) before coming here, once
+        this is fixed we'll ask you to revisit it and update your reaction
+        if it's resolved for you.
+  - type: textarea
+    id: description
+    attributes:
+      label: What went wrong?
+      description: What did you expect to happen, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Mount options used, ext type (ext2/ext3/ext4), and the exact commands that trigger it.
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version and chip (Apple Silicon / Intel)
+    validations:
+      required: true
+  - type: input
+    id: fuse-ext2-version
+    attributes:
+      label: fuse-ext2 version (`fuse-ext2 --version` or the git tag/commit you built)
+    validations:
+      required: true
