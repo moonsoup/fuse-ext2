@@ -36,7 +36,8 @@ echo "=== stress -> $MNT : ${LARGE_GB}GB in ${FILE_MB}MB blocks (${n_large} file
 echo "  start mem: $(mem)"
 
 echo "--- large-block phase ---"
-declare -A SUM
+# indexed array with numeric subscripts (bash 3.2 compatible — no associative arrays)
+SUM=()
 for i in $(seq 1 "$n_large"); do
   f="$DIR/large/big_$i.bin"
   if ! dd if=/dev/urandom of="$f" bs=1m count="$FILE_MB" 2>/dev/null; then

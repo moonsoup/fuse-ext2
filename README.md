@@ -114,6 +114,31 @@ files owned by a UID that doesn't exist here stay readable:
 sudo fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other,no_default_permissions
 ```
 
+### Read-write mode
+
+Read-only remains the supported default. Read-write is available behind an
+explicit opt-in (`force`, or `rw+` which implies it) for cases where you
+genuinely need to write back to the ext filesystem:
+
+```bash
+sudo fuse-ext2 /dev/disk4s3 /tmp/ext -o rw+,allow_other
+```
+
+A built-in **writeback governor** paces writes to real device speed — forcing
+a durability flush (bitmaps, superblock, group descriptors, then the device
+fsync) every so many bytes written, tightening automatically under macOS
+memory pressure. This is the backpressure that keeps a slow device on a
+low-RAM host from building unbounded dirty pages until the kernel tears the
+mount down mid-write. It's on unconditionally in RW mode; tune it only if you
+know you need to via `FUSE_EXT2_WB_NORMAL_MIB` / `FUSE_EXT2_WB_WARN_MIB` /
+`FUSE_EXT2_WB_CRITICAL_MIB` env vars (defaults: 128 / 16 / 1 MiB).
+
+Mounting read-write also checks macOS's `disksleep` power-management setting
+and warns (not blocks) if it's non-zero — a spun-down disk mid-write is a
+correctness risk on any filesystem, ext included. If you see the warning,
+either disable it for the session (`sudo pmset -a disksleep 0`) or accept the
+risk knowingly.
+
 ## Troubleshooting
 
 - **"Operation not permitted" / can't open the device** — grant your terminal
@@ -129,6 +154,9 @@ sudo fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other,no_default_permissions
 
 - **Builds on current macOS** — adapts the `getxattr` operation to the Darwin signature (offered upstream as [#154](https://github.com/alperakcan/fuse-ext2/pull/154)).
 - **`no_default_permissions` option** — read files owned by a foreign UID (recovered drives) without mounting as root (offered upstream as [#155](https://github.com/alperakcan/fuse-ext2/pull/155)).
+- **Writeback governor for read-write mode** — bounds dirty bytes on a sustained write with a real durability flush every N bytes, adapting to macOS memory pressure, so a slow device + low-RAM host doesn't build unbounded dirty pages until the kernel tears the mount down mid-write.
+- **`disksleep` mount-time warning** — flags macOS's disk-sleep power setting before a read-write mount, since a spun-down disk mid-write risks silent corruption.
+- Symlink fix — no longer sets `EXT4_EXTENTS_FL` on inodes that reuse `i_block` for raw (fast) symlink data, which was corrupting short symlinks.
 - Read-only mount verified on ext2, ext3, and ext4.
 
 ---
