@@ -19,8 +19,8 @@ Read-only is the intended, supported mode — ideal for pulling data off a Linux
 ### Does it work for you?
 
 <p align="center">
-  <a href="https://github.com/moonsoup/fuse-ext2/issues/13"><img alt="Works for me" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moonsoup/fuse-ext2/main/.github/badges/feedback-up.json"></a>
-  <a href="https://github.com/moonsoup/fuse-ext2/issues/13"><img alt="Having issues" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moonsoup/fuse-ext2/main/.github/badges/feedback-down.json"></a>
+  <a href="https://github.com/moonsoup/fuse-ext2/issues/13"><img alt="Works for me" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moonsoup/fuse-ext2/master/.github/badges/feedback-up.json"></a>
+  <a href="https://github.com/moonsoup/fuse-ext2/issues/13"><img alt="Having issues" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moonsoup/fuse-ext2/master/.github/badges/feedback-down.json"></a>
 </p>
 
 Both buttons take you to the [community feedback issue](https://github.com/moonsoup/fuse-ext2/issues/13), where you react 👍 or 👎 with your GitHub account — one of each per person, counted live above. If something's broken, react 👎 *and* [file a bug report](https://github.com/moonsoup/fuse-ext2/issues/new?template=bug_report.yml) so it can actually get fixed; once a linked bug is closed, we'll ask you there to revisit and update your reaction if it's resolved.
