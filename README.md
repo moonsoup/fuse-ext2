@@ -16,6 +16,15 @@ This is a maintained fork of [alperakcan/fuse-ext2](https://github.com/alperakca
 
 Read-only is the intended, supported mode — ideal for pulling data off a Linux drive from a Mac.
 
+### Does it work for you?
+
+<p align="center">
+  <a href="https://github.com/moonsoup/fuse-ext2/issues/13"><img alt="Works for me" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moonsoup/fuse-ext2/main/.github/badges/feedback-up.json"></a>
+  <a href="https://github.com/moonsoup/fuse-ext2/issues/13"><img alt="Having issues" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moonsoup/fuse-ext2/main/.github/badges/feedback-down.json"></a>
+</p>
+
+Both buttons take you to the [community feedback issue](https://github.com/moonsoup/fuse-ext2/issues/13), where you react 👍 or 👎 with your GitHub account — one of each per person, counted live above. If something's broken, react 👎 *and* [file a bug report](https://github.com/moonsoup/fuse-ext2/issues/new?template=bug_report.yml) so it can actually get fixed; once a linked bug is closed, we'll ask you there to revisit and update your reaction if it's resolved.
+
 ### Companion tools
 
 - **[fuse-watchdog](https://github.com/moonsoup/fuse-watchdog)** — an optional, external recovery watchdog that auto-remounts a fuse-ext2 mount if the backing USB device drops off the bus (`ENXIO` / "Device not configured"). It re-verifies the ext4 UUID before remounting, so it can never attach the wrong disk. Built specifically as a workaround for a flaky USB dock; **not needed with reliable hardware** — the real fix for a dropping dock is a better enclosure (UASP/ASMedia or Thunderbolt).

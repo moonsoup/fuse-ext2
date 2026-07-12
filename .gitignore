@@ -55,3 +55,8 @@ config.guess~
 config.sub~
 *~
 CLAUDE.md
+
+# Python (CI helper scripts under .github/scripts/)
+__pycache__/
+.pytest_cache/
+*.pyc

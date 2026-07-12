@@ -1,0 +1,37 @@
+name: Ask reporter to reconsider feedback
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+env:
+  FEEDBACK_ISSUE_NUMBER: "13"
+
+jobs:
+  maybe-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test deps
+        run: pip install pytest
+
+      - name: Run tests before touching live data
+        run: python3 -m pytest test_post_reconsider_comment.py -v
+        working-directory: .github/scripts
+
+      - name: Post reconsider-feedback comment if this was a fixed bug
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          STATE_REASON: ${{ github.event.issue.state_reason }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+        run: python3 post_reconsider_comment.py
+        working-directory: .github/scripts
