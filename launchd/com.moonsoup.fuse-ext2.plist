@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchDaemon: mounts the DockProjects ext4 drive automatically at boot, as
+  root -- so no Full Disk Access grant and no password prompt are needed.
+  (FDA is only required when running `sudo fuse-ext2 ...` interactively from
+  a terminal app; a root LaunchDaemon started directly by launchd at boot
+  never goes through that TCC path at all -- raw device access is governed
+  by ordinary BSD device permissions for a root process.)
+
+  Deliberately KeepAlive=false: this daemon's only job is a clean mount at
+  boot. If the device later drops off the bus, blindly restarting this same
+  command would just crash-loop against a dead device (the same class of bug
+  fixed in projectMan's own watchdog for its own dependents). Recovering a
+  later drop -- kill stale daemon, release, verify UUID, remount -- is
+  ../fuse-watchdog's job specifically, not this one's.
+
+  Edit the two paths below to match your checkout + device, copy to
+  /Library/LaunchDaemons/, then:  sudo launchctl load <plist>
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.moonsoup.fuse-ext2</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/env</string>
+        <string>FUSE_EXT2_WB_NORMAL_MIB=32</string>
+        <string>/Users/isme/Software/Drivers/fuse-ext2/fuse-ext2/fuse-ext2</string>
+        <string>/dev/disk4s2</string>
+        <string>/Users/isme/DockProjects</string>
+        <string>-o</string>
+        <string>rw+,allow_other,local,no_default_permissions,uid=501,gid=20</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/isme/Software/Drivers/fuse-ext2/fuse-ext2.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/isme/Software/Drivers/fuse-ext2/fuse-ext2.err.log</string>
+</dict>
+</plist>

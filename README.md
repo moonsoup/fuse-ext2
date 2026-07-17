@@ -123,11 +123,36 @@ files owned by a UID that doesn't exist here stay readable:
 sudo fuse-ext2 /dev/disk4s3 /tmp/ext -o ro,allow_other,no_default_permissions
 ```
 
+### Mounting automatically at boot
+
+The Full Disk Access requirement above only applies to running `sudo fuse-ext2 …`
+**interactively from a terminal app** — macOS's TCC attributes that raw-device
+open to the terminal app, not to `sudo` or the binary. A **root LaunchDaemon**
+started directly by `launchd` at boot never goes through that path at all: raw
+device access for a root process is governed by ordinary BSD device
+permissions, not TCC. So the way to get a password-free, no-Full-Disk-Access
+auto-mount at boot is a LaunchDaemon, not a Full Disk Access grant:
+
+```bash
+cp launchd/com.moonsoup.fuse-ext2.plist /tmp/   # edit the device/mount paths first if yours differ
+sudo cp /tmp/com.moonsoup.fuse-ext2.plist /Library/LaunchDaemons/
+sudo launchctl load /Library/LaunchDaemons/com.moonsoup.fuse-ext2.plist
+```
+
+This mounts once at boot (`RunAtLoad`) and deliberately does **not** restart
+itself if the device later drops off the bus (`KeepAlive` is off) — blindly
+restarting the plain mount command against a dropped device would just
+crash-loop uselessly. Recovering an actual drop — kill stale daemon, release,
+verify the ext4 UUID, remount — is
+**[fuse-watchdog](https://github.com/moonsoup/fuse-watchdog)**'s job
+specifically; install that too if your enclosure needs it.
+
 ## Troubleshooting
 
 - **"Operation not permitted" / can't open the device** — grant your terminal
   **Full Disk Access** (System Settings → Privacy & Security → Full Disk Access),
-  then try the `sudo fuse-ext2 …` command again.
+  then try the `sudo fuse-ext2 …` command again. (Not needed for the boot-time
+  LaunchDaemon above — see that section.)
 - **"the file system is not available" / nothing mounts** — macFUSE isn't loaded.
   Re-check the enablement steps under [Requirements](#requirements) (approve the
   extension, reboot; on Apple Silicon, the Recovery-mode security policy).
